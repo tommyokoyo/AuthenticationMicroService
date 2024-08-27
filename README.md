@@ -1,2 +1,0 @@
-# AuthenticationService
-Authentication MicroService
