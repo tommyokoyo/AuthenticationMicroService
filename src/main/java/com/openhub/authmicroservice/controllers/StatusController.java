@@ -1,16 +1,40 @@
 package com.openhub.authmicroservice.controllers;
 
+import com.openhub.authmicroservice.exceptionhandler.ResponseUtil;
+import com.openhub.authmicroservice.models.TokenDTO;
+import com.openhub.authmicroservice.security.JWTUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/status")
 public class StatusController {
 
-    @GetMapping("/hello")
-    public ResponseEntity<String> apiHello(){
-        return ResponseEntity.ok("Api Hello");
+
+    private JWTUtil jwtUtil;
+
+    @Autowired
+    public StatusController(JWTUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
+    @GetMapping("/api-hello")
+    public ResponseEntity<?> apiHello(){
+        return ResponseUtil.buildSuccessResponse(HttpStatus.OK,"Success","hello-back");
+    }
+
+    @PostMapping("/check-token")
+    public ResponseEntity<?> checkToken(@RequestBody TokenDTO token) {
+        String authToken  = token.getToken();
+        if (authToken != null) {
+            if (jwtUtil.validateToken(authToken, "okoyotommy")) {
+                return ResponseUtil.buildSuccessResponse(HttpStatus.OK, "Valid Token", jwtUtil.extractUsername(authToken));
+            } else {
+                return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Invalid Token", "We could not verify the token");
+            }
+        }
+        return ResponseEntity.ok("No Token Provided");
     }
 }

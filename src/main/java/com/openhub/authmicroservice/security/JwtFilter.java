@@ -2,50 +2,45 @@ package com.openhub.authmicroservice.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
 @Configuration
-public class JWTFilter extends UsernamePasswordAuthenticationFilter {
+public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
-    private JWTUtil jwtutil;
+    private JWTUtil jwtUtil;
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        // Cast the Servlet request/response to HttpServlet req/res
-        HttpServletRequest req = (HttpServletRequest) request;
-        HttpServletResponse res = (HttpServletResponse) response;
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        final String authHeader = req.getHeader("Authorization");
+        final String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             final String token = authHeader.substring(7);
-            final String username = jwtutil.extractUsername(token);
+            final String username = jwtUtil.extractUsername(token);
 
-            // Check if the user session already exists
+            // Check if session already exists
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                // Validate JWT token
-                if (jwtutil.validateToken(token, username)) {
+                // Validate the token
+                if (jwtUtil.validateToken(token, username)) {
                     UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken
                             (username, null, null);
-                    // Set the authentication in Security context
+
+                    // Add to security context
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
             }
+
         }
-        // Proceed to the next filter
-        chain.doFilter(request, response);
+        filterChain.doFilter(request, response);
     }
 }
