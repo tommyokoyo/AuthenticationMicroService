@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 
 @Component
-public class JWTutil {
-    private String JWT_SECRET = "secret";
+public class JWTUtil {
+    private final String JWT_SECRET = "secret";
 
     public String generateToken(String username) {
         return Jwts.builder()

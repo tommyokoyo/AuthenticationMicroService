@@ -30,7 +30,7 @@ public class AuthController {
             return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Password can not be null or empty");
         }
         if (authService.validateUser(user.getUsername(), user.getPassword())){
-            return ResponseUtil.buildSuccessResponse(HttpStatus.OK, "Login Successful", "Username and password correct");
+            return ResponseUtil.buildSuccessResponse(HttpStatus.OK, "Login Successful", authService.getToken());
         } else {
             return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "User is not valid");
         }
