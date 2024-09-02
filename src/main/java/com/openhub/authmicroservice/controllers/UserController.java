@@ -5,11 +5,14 @@ import com.openhub.authmicroservice.exceptionhandler.ResponseUtil;
 import com.openhub.authmicroservice.models.SuccessResponse;
 import com.openhub.authmicroservice.models.UserDTO;
 import com.openhub.authmicroservice.repositories.UserRepository;
+import com.openhub.authmicroservice.security.JWTUtil;
 import com.openhub.authmicroservice.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
@@ -17,11 +20,13 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
+    private final JWTUtil jwtUtil;
 
     @Autowired
-    public UserController(UserRepository userRepository, UserService userService) {
+    public UserController(UserRepository userRepository, UserService userService, JWTUtil jwtUtil) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
 
     @GetMapping("/all-users")
@@ -30,26 +35,39 @@ public class UserController {
     }
 
     @GetMapping("/get-user")
-    public ResponseEntity<?> getUser() {
-        return ResponseUtil.buildSuccessResponse(
-                HttpStatus.OK,
-                "Success",
-                "You have successfully reached this endpoint");
+    public ResponseEntity<?> getUser(@RequestHeader(value = "Authorization", required = false) String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            final String authToken = token.substring(7);
+
+            Optional<UserDTO> user = userService.findByFilterUsername(jwtUtil.extractUsername(authToken));
+
+            if (user != null && user.isPresent()) {
+                return new ResponseEntity<>(user.get(), HttpStatus.OK);
+            } else {
+                return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Error", "Error Loading details");
+            }
+        } else {
+            return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Error", "You are not logged in");
+        }
     }
 
     @PostMapping("/new-user")
-    public ResponseEntity<?> createUser(@RequestBody UserDTO user) {
+    public ResponseEntity<?> createUser(@RequestBody User user) {
+        // Validates parameters to ensure no null submissions
         if (user.getUsername() == null || user.getUsername().isEmpty()) {
             return ResponseUtil.buildErrorResponse(
                     HttpStatus.BAD_REQUEST,
                     "Bad Request",
-                    "Username can not be null or empty");
+                    "Username can not be null or empty"
+            );
+
         } else if (user.getEmail() == null || user.getEmail().isEmpty()) {
             return ResponseUtil.buildErrorResponse(
                     HttpStatus.BAD_REQUEST,
                     "Bad Request",
                     "Email can not be null or empty"
             );
+
         } else if (user.getPassword() == null || user.getPassword().isEmpty()) {
             return ResponseUtil.buildErrorResponse(
                     HttpStatus.BAD_REQUEST,

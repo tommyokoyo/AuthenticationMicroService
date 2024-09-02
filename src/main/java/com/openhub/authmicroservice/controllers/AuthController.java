@@ -1,6 +1,7 @@
 package com.openhub.authmicroservice.controllers;
 
 import com.openhub.authmicroservice.exceptionhandler.ResponseUtil;
+import com.openhub.authmicroservice.models.User;
 import com.openhub.authmicroservice.models.UserDTO;
 import com.openhub.authmicroservice.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> validateCredentials(@RequestBody UserDTO user) {
+    public ResponseEntity<?> validateCredentials(@RequestBody User user) {
         if (user.getUsername() == null || user.getUsername().isEmpty()){
             return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Username can not be null or empty");
         }

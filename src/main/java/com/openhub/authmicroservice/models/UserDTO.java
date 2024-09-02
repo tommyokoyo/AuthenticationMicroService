@@ -1,10 +1,19 @@
 package com.openhub.authmicroservice.models;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Setter
+@Getter
 public class UserDTO {
+    private String userID;
     private String username;
     private String email;
-    private String password;
+
+    public UserDTO(String userID, String username, String email) {
+        this.userID = userID;
+        this.username = username;
+        this.email = email;
+    }
+
 }

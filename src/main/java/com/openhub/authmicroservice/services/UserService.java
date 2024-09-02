@@ -20,7 +20,7 @@ public class UserService {
         this.jwtUtil = jwtUtil;
     }
 
-    public User createUser(UserDTO user) {
+    public User createUser(User user) {
         User newUser = new User();
         newUser.setUserID(jwtUtil.generateUUID());
         newUser.setEmail(user.getEmail());
@@ -32,5 +32,9 @@ public class UserService {
 
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
+    }
+
+    public Optional<UserDTO> findByFilterUsername(String username) {
+        return userRepository.findAndFilterByUsername(username);
     }
 }

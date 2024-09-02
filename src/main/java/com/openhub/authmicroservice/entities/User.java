@@ -7,9 +7,11 @@ import lombok.Getter;
 
 @Entity
 @Table(
-        name = "TB_USERS",
-        uniqueConstraints = @UniqueConstraint(columnNames = {
-                "user_id", "username"})
+        name = "tb_users",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "email_constraint", columnNames = "email"),
+                @UniqueConstraint(name = "username_constraint", columnNames = "username"),
+        }
 )
 public class User {
     @Id
@@ -17,6 +19,7 @@ public class User {
             name = "user_id",
             nullable = false,
             updatable = false,
+            unique = true,
             columnDefinition = "VARCHAR(100)"
     )
     private String UserID;
@@ -25,6 +28,7 @@ public class User {
             name = "username",
             nullable = false,
             updatable = true,
+            unique = true,
             columnDefinition = "VARCHAR(250)"
     )
     private String username;
@@ -33,6 +37,7 @@ public class User {
             name = "email",
             updatable = true,
             nullable = false,
+            unique = true,
             columnDefinition = "VARCHAR(300)"
     )
     private String email;
