@@ -5,6 +5,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JWTUtil {
@@ -38,5 +39,9 @@ public class JWTUtil {
 
     public boolean validateToken(String token, String username) {
         return (username.equals(extractUsername(token)) && !isTokenExpired(token));
+    }
+
+    public String generateUUID() {
+        return UUID.randomUUID().toString();
     }
 }

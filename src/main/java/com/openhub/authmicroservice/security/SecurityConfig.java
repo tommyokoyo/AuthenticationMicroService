@@ -19,6 +19,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/api/status/**").permitAll()
+                        .requestMatchers("/api/user/new-user").permitAll()
                         .requestMatchers("/api/user/**").authenticated()
                         .anyRequest().permitAll())
                 .logout(logout -> logout.permitAll());

@@ -1,10 +1,8 @@
 package com.openhub.authmicroservice.controllers;
 
 import com.openhub.authmicroservice.exceptionhandler.ResponseUtil;
-import com.openhub.authmicroservice.models.ErrorResponse;
-import com.openhub.authmicroservice.models.SuccessResponse;
 import com.openhub.authmicroservice.models.UserDTO;
-import com.openhub.authmicroservice.services.AuthService;
+import com.openhub.authmicroservice.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthenticationService authService;
 
     @Autowired
-    public AuthController(AuthService authService) {
+    public AuthController(AuthenticationService authService) {
         this.authService = authService;
     }
 
@@ -32,7 +30,7 @@ public class AuthController {
         if (authService.validateUser(user.getUsername(), user.getPassword())){
             return ResponseUtil.buildSuccessResponse(HttpStatus.OK, "Login Successful", authService.getToken());
         } else {
-            return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "User is not valid");
+            return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "User or Password is Incorrect");
         }
     }
 }
