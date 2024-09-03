@@ -2,7 +2,6 @@ package com.openhub.authmicroservice.controllers;
 
 import com.openhub.authmicroservice.exceptionhandler.ResponseUtil;
 import com.openhub.authmicroservice.models.User;
-import com.openhub.authmicroservice.models.UserDTO;
 import com.openhub.authmicroservice.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,10 +27,18 @@ public class AuthController {
         if (user.getPassword() == null || user.getPassword().isEmpty()){
             return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "Password can not be null or empty");
         }
-        if (authService.validateUser(user.getUsername(), user.getPassword())){
-            return ResponseUtil.buildSuccessResponse(HttpStatus.OK, "Login Successful", authService.getToken());
-        } else {
-            return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "User or Password is Incorrect");
+        try {
+            if (authService.validateUser(user.getUsername(), user.getPassword())){
+                return ResponseUtil.buildSuccessResponse(HttpStatus.OK, "Login Successful", authService.getToken());
+            } else {
+                return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "User or Password is Incorrect");
+            }
+        }
+        catch (Exception e){
+            System.out.println("Exception: " + e.getMessage());
+            return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST,
+                    "Bad Request",
+                    e.getMessage());
         }
     }
 }

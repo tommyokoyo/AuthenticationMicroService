@@ -2,7 +2,6 @@ package com.openhub.authmicroservice.controllers;
 
 import com.openhub.authmicroservice.entities.User;
 import com.openhub.authmicroservice.exceptionhandler.ResponseUtil;
-import com.openhub.authmicroservice.models.SuccessResponse;
 import com.openhub.authmicroservice.models.UserDTO;
 import com.openhub.authmicroservice.repositories.UserRepository;
 import com.openhub.authmicroservice.security.JWTUtil;
@@ -31,20 +30,32 @@ public class UserController {
 
     @GetMapping("/all-users")
     public ResponseEntity<?> getAllUsers() {
-        return new ResponseEntity<>(userRepository.findAll(), HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(userRepository.findAll(), HttpStatus.OK);
+        }
+        catch (Exception e) {
+            return ResponseUtil.buildSuccessResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "Error",
+                    "Error fetching Users: " + e.getMessage());
+        }
     }
 
     @GetMapping("/get-user")
     public ResponseEntity<?> getUser(@RequestHeader(value = "Authorization", required = false) String token) {
         if (token != null && token.startsWith("Bearer ")) {
             final String authToken = token.substring(7);
-
-            Optional<UserDTO> user = userService.findByFilterUsername(jwtUtil.extractUsername(authToken));
-
-            if (user != null && user.isPresent()) {
-                return new ResponseEntity<>(user.get(), HttpStatus.OK);
-            } else {
-                return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Error", "Error Loading details");
+            try {
+                Optional<UserDTO> user = userService.findByFilterUsername(jwtUtil.extractUsername(authToken));
+                if (user != null && user.isPresent()) {
+                    return new ResponseEntity<>(user.get(), HttpStatus.OK);
+                } else {
+                    return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Error", "Error Loading details");
+                }
+            }
+            catch (Exception e) {
+                System.out.println(e.getMessage());
+                return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Error", e.getMessage());
             }
         } else {
             return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Error", "You are not logged in");
@@ -75,19 +86,25 @@ public class UserController {
                     "Password can not be null or empty"
             );
         }
-
-        User newUser = userService.createUser(user);
-
-        if (newUser != null) {
-            return ResponseUtil.buildSuccessResponse(
-                    HttpStatus.CREATED,
-                    "Success",
-                    newUser.getUsername() + " has been created");
-        } else {
+        try {
+            User newUser = userService.createUser(user);
+            if (newUser != null) {
+                return ResponseUtil.buildSuccessResponse(
+                        HttpStatus.CREATED,
+                        "Success",
+                        newUser.getUsername() + " has been created");
+            } else {
+                return ResponseUtil.buildSuccessResponse(
+                        HttpStatus.BAD_REQUEST,
+                        "Error",
+                        "There has been an error creating the User");
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
             return ResponseUtil.buildSuccessResponse(
                     HttpStatus.BAD_REQUEST,
                     "Error",
-                    "There has been an error creating the User");
+                    "Processing Error: " + e.getMessage());
         }
     }
 }

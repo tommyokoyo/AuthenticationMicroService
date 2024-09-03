@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 public class StatusController {
 
 
-    private JWTUtil jwtUtil;
+    private final JWTUtil jwtUtil;
 
     @Autowired
     public StatusController(JWTUtil jwtUtil) {
@@ -29,12 +29,28 @@ public class StatusController {
     public ResponseEntity<?> checkToken(@RequestBody TokenDTO token) {
         String authToken  = token.getToken();
         if (authToken != null) {
-            if (jwtUtil.validateToken(authToken, "okoyotommy")) {
-                return ResponseUtil.buildSuccessResponse(HttpStatus.OK, "Valid Token", jwtUtil.extractUsername(authToken));
-            } else {
-                return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Invalid Token", "We could not verify the token");
+            try {
+                if (jwtUtil.validateToken(authToken, "okoyotommy")) {
+                    return ResponseUtil.buildSuccessResponse(HttpStatus.OK,
+                            "Valid Token",
+                            jwtUtil.extractUsername(authToken));
+                } else {
+                    return ResponseUtil.buildErrorResponse(HttpStatus.UNAUTHORIZED,
+                            "Invalid Token",
+                            "We could not verify the token");
+                }
+            }
+
+            catch (Exception e) {
+                System.out.println("Exception: " + e.getMessage());
+                return ResponseUtil.buildErrorResponse(HttpStatus.UNAUTHORIZED,
+                        "Invalid Token",
+                        e.getMessage());
             }
         }
-        return ResponseEntity.ok("No Token Provided");
+
+        return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN,
+                "Invalid Token",
+                "No Token Provided");
     }
 }
