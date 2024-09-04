@@ -20,7 +20,7 @@ public class JWTUtil {
                 .compact();
     }
 
-    public String extractUsername(String token) {
+    public String extractUserID(String token) {
         return Jwts.parser()
                 .setSigningKey(JWT_SECRET)
                 .parseClaimsJws(token)
@@ -37,8 +37,8 @@ public class JWTUtil {
                 .before(new Date());
     }
 
-    public boolean validateToken(String token, String username) {
-        return (username.equals(extractUsername(token)) && !isTokenExpired(token));
+    public boolean validateToken(String token, String UserID) {
+        return (UserID.equals(extractUserID(token)) && !isTokenExpired(token));
     }
 
     public String generateUUID() {

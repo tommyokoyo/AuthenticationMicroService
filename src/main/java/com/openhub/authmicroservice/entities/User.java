@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Setter
 @Getter
 @Entity
@@ -47,5 +49,8 @@ public class User {
             columnDefinition = "VARCHAR(250)"
     )
     private String password;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Post> posts;
 
 }

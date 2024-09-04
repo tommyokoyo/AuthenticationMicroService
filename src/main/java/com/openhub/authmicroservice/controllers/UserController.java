@@ -31,7 +31,12 @@ public class UserController {
     @GetMapping("/all-users")
     public ResponseEntity<?> getAllUsers() {
         try {
-            return new ResponseEntity<>(userRepository.findAll(), HttpStatus.OK);
+            if (userRepository.count() == 0) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            } else {
+                return new ResponseEntity<>(userRepository.findAll(), HttpStatus.OK);
+            }
+
         }
         catch (Exception e) {
             return ResponseUtil.buildSuccessResponse(
@@ -46,7 +51,7 @@ public class UserController {
         if (token != null && token.startsWith("Bearer ")) {
             final String authToken = token.substring(7);
             try {
-                Optional<UserDTO> user = userService.findByFilterUsername(jwtUtil.extractUsername(authToken));
+                Optional<UserDTO> user = userService.findByUserID(jwtUtil.extractUserID(authToken));
                 if (user != null && user.isPresent()) {
                     return new ResponseEntity<>(user.get(), HttpStatus.OK);
                 } else {

@@ -26,6 +26,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/status/**").permitAll()
                         .requestMatchers("/api/user/new-user").permitAll()
                         .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/post/**").authenticated()
                         .anyRequest().permitAll())
                 .logout(logout -> logout.permitAll());
 

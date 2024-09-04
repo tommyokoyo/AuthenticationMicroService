@@ -36,7 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
             final String token = authHeader.substring(7);
 
             try {
-                final String username = jwtUtil.extractUsername(token);
+                final String username = jwtUtil.extractUserID(token);
 
                 // Check if session already exists
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {

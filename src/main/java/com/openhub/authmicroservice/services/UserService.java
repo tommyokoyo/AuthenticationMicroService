@@ -34,7 +34,11 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
-    public Optional<UserDTO> findByFilterUsername(String username) {
-        return userRepository.findAndFilterByUsername(username);
+    public Optional<User> findUserByUserID(String UserID) {
+        return userRepository.findByUserID(UserID);
+    }
+
+    public Optional<UserDTO> findByUserID(String userID) {
+        return userRepository.findAndFilterByUserID(userID);
     }
 }

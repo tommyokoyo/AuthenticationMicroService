@@ -30,10 +30,10 @@ public class StatusController {
         String authToken  = token.getToken();
         if (authToken != null) {
             try {
-                if (jwtUtil.validateToken(authToken, "okoyotommy")) {
+                if (jwtUtil.validateToken(authToken, jwtUtil.extractUserID(authToken))) {
                     return ResponseUtil.buildSuccessResponse(HttpStatus.OK,
                             "Valid Token",
-                            jwtUtil.extractUsername(authToken));
+                            "The UserID is " + jwtUtil.extractUserID(authToken));
                 } else {
                     return ResponseUtil.buildErrorResponse(HttpStatus.UNAUTHORIZED,
                             "Invalid Token",
