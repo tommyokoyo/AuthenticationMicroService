@@ -4,11 +4,12 @@ import com.openhub.authmicroservice.entities.User;
 import com.openhub.authmicroservice.exceptionhandler.ResponseUtil;
 import com.openhub.authmicroservice.models.UserDTO;
 import com.openhub.authmicroservice.repositories.UserRepository;
-import com.openhub.authmicroservice.security.JWTUtil;
 import com.openhub.authmicroservice.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -19,13 +20,11 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService;
-    private final JWTUtil jwtUtil;
 
     @Autowired
-    public UserController(UserRepository userRepository, UserService userService, JWTUtil jwtUtil) {
+    public UserController(UserRepository userRepository, UserService userService) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.jwtUtil = jwtUtil;
     }
 
     @GetMapping("/all-users")
@@ -47,23 +46,22 @@ public class UserController {
     }
 
     @GetMapping("/get-user")
-    public ResponseEntity<?> getUser(@RequestHeader(value = "Authorization", required = false) String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            final String authToken = token.substring(7);
-            try {
-                Optional<UserDTO> user = userService.findByUserID(jwtUtil.extractUserID(authToken));
-                if (user != null && user.isPresent()) {
-                    return new ResponseEntity<>(user.get(), HttpStatus.OK);
-                } else {
-                    return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Error", "Error Loading details");
-                }
+    public ResponseEntity<?> getUser() {
+        // Pull username from the SecurityContext holder
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String UserID = authentication.getName();
+
+        try {
+            Optional<UserDTO> user = userService.findByUserID(UserID);
+            if (user != null && user.isPresent()) {
+                return new ResponseEntity<>(user.get(), HttpStatus.OK);
+            } else {
+                return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Error", "Error Loading details");
             }
-            catch (Exception e) {
-                System.out.println(e.getMessage());
-                return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Error", e.getMessage());
-            }
-        } else {
-            return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN, "Error", "You are not logged in");
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+            return ResponseUtil.buildErrorResponse(HttpStatus.BAD_REQUEST, "Error", e.getMessage());
         }
     }
 

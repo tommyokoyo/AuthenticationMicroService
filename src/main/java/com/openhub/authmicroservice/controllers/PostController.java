@@ -3,7 +3,6 @@ package com.openhub.authmicroservice.controllers;
 import com.openhub.authmicroservice.entities.Post;
 import com.openhub.authmicroservice.entities.User;
 import com.openhub.authmicroservice.exceptionhandler.ResponseUtil;
-import com.openhub.authmicroservice.models.PostDTO;
 import com.openhub.authmicroservice.models.UserDTO;
 import com.openhub.authmicroservice.repositories.PostRepository;
 import com.openhub.authmicroservice.security.JWTUtil;
@@ -12,6 +11,8 @@ import com.openhub.authmicroservice.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,130 +35,102 @@ public class PostController {
     }
 
     @GetMapping("/get-all-posts")
-    public ResponseEntity<?> getaAllUserPosts(@RequestHeader(value = "Authorization", required = false) String authToken) {
-        // Pull the UserID from the Authorization Token
-        if (authToken != null && authToken.startsWith("Bearer ")) {
-            authToken = authToken.substring(7);
+    public ResponseEntity<?> getaAllUserPosts() {
+        // Pull username from the SecurityContext holder
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String authenticationUsername = authentication.getName();
 
-            // Find Username
-            try {
-                String UserID = jwtUtil.extractUserID(authToken);
-                Optional<UserDTO> user = userService.findByUserID(UserID);
-                if (user != null && user.isPresent()) {
+        // Find User Posts
+        try {
+            Optional<UserDTO> user = userService.findByUserID(authenticationUsername);
+            if (user != null && user.isPresent()) {
+                try {
+                    UserDTO userDetails = user.get();
                     try {
-                        UserDTO userDetails = user.get();
-                        try {
-                            // Get User Posts
-                            List<Post> userPosts = postService.findPostByUserID(userDetails.getUserID());
+                        // Get User Posts
+                        List<Post> userPosts = postService.findPostByUserID(userDetails.getUserID());
 
-                            // Check if User has any posts
-                            if (userPosts != null && !userPosts.isEmpty()) {
-                                return ResponseUtil.buildSuccessResponse(
-                                        HttpStatus.OK,
-                                        "Success",
-                                        "Posts retrieved"
-                                );
-                            } else {
-                                return ResponseUtil.buildSuccessResponse(
-                                        HttpStatus.OK,
-                                        "Success",
-                                        "Tsk Tsk Tsk...User has not Posted yet"
-                                );
-                            }
-                        }
-                        catch (Exception e) {
-                            System.out.println("Error Fetching User Posts: " + e.getMessage());
-                            return ResponseUtil.buildErrorResponse(
-                                    HttpStatus.INTERNAL_SERVER_ERROR,
-                                    "Error",
-                                    "Error Processing Request"
+                        // Check if User has any posts
+                        if (userPosts != null && !userPosts.isEmpty()) {
+                            return ResponseUtil.buildSuccessResponse(
+                                    HttpStatus.OK,
+                                    "Success",
+                                    "Posts retrieved"
+                            );
+                        } else {
+                            return ResponseUtil.buildSuccessResponse(
+                                    HttpStatus.OK,
+                                    "Success",
+                                    "Tsk Tsk Tsk...User has not Posted yet"
                             );
                         }
                     }
                     catch (Exception e) {
-                        System.out.println(e.getMessage());
+                        System.out.println("Error Fetching User Posts: " + e.getMessage());
                         return ResponseUtil.buildErrorResponse(
-                                HttpStatus.OK,
+                                HttpStatus.INTERNAL_SERVER_ERROR,
                                 "Error",
-                                "Error Procession request: " + e.getMessage()
+                                "Error Processing Request"
                         );
                     }
-                } else {
-                    return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN,
-                            "Error",
-                            "You are not authorized to access this resource.");
                 }
+                catch (Exception e) {
+                    System.out.println(e.getMessage());
+                    return ResponseUtil.buildErrorResponse(
+                            HttpStatus.OK,
+                            "Error",
+                            "Error Procession request: " + e.getMessage()
+                    );
+                }
+            } else {
+                return ResponseUtil.buildErrorResponse(HttpStatus.FORBIDDEN,
+                        "Error",
+                        "You are not authorized to access this resource.");
             }
-            catch (Exception e) {
-                System.out.println(e.getMessage());
-                return ResponseUtil.buildErrorResponse(
-                        HttpStatus.UNAUTHORIZED,
-                        "Error Processing request",
-                        e.getMessage()
-                );
-            }
-        } else {
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
             return ResponseUtil.buildErrorResponse(
-                    HttpStatus.FORBIDDEN,
-                    "Error",
-                    "You are not authorized to access this resource."
+                    HttpStatus.UNAUTHORIZED,
+                    "Error Processing request",
+                    e.getMessage()
             );
         }
     }
 
     @PostMapping("/new-post")
-    public ResponseEntity<?> newPost(@RequestHeader(value = "Authorization", required = false) String authToken,
-                                     @RequestBody PostDTO postDTO) {
-        String postTitle = postDTO.getPostTitle();
-        System.out.println(postTitle);
-        // Pull the UserID from the Authorization Token
-        if (authToken != null && authToken.startsWith("Bearer ")) {
-            authToken = authToken.substring(7);
+    public ResponseEntity<?> newPost(@RequestBody Post post) {
 
-            String UserID = jwtUtil.extractUserID(authToken);
-            Optional<User> user = userService.findUserByUserID(UserID);
-            System.out.println(postDTO.getPostTitle());
-            if (user != null && user.isPresent()) {
-                try {
-                    if (postDTO != null) {
-                        // Save post
-                        Post newPost = new Post();
-                        newPost.setPostID(jwtUtil.generateUUID());
-                        newPost.setTitle(postDTO.getPostTitle());
-                        newPost.setContent(postDTO.getPostContent());
-                        newPost.setUser(user.get());
-                        postRepository.save(newPost);
+        // Pull username from the SecurityContext holder
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String UserID = authentication.getName();
 
-                        return ResponseUtil.buildSuccessResponse(
-                                HttpStatus.CREATED,
-                                "Success",
-                                "Post Created"
-                        );
-                    } else {
-                        return ResponseUtil.buildErrorResponse(
-                                HttpStatus.BAD_REQUEST,
-                                "Error",
-                                "No null values man"
-                        );
-                    }
+        Optional<User> user = userService.findUserByUserID(UserID);
+        if (user != null && user.isPresent()) {
+            try {
+                // Save post
+                Post newPost = new Post();
+                newPost.setPostID(jwtUtil.generateUUID());
+                newPost.setTitle(post.getTitle());
+                newPost.setContent(post.getContent());
+                newPost.setUser(user.get());
+                postRepository.save(newPost);
+
+                return ResponseUtil.buildSuccessResponse(
+                        HttpStatus.CREATED,
+                        "Success",
+                        "Post Created"
+                );
 
 
-                } catch (Exception e) {
-                    System.out.println("Error creating User Posts: " + e.getMessage());
-                    return ResponseUtil.buildErrorResponse(
-                            HttpStatus.NOT_ACCEPTABLE,
-                            "Error",
-                            "Error Processing Request"
-                    );
-                }
-            } else {
+            } catch (Exception e) {
+                System.out.println("Error creating User Posts: " + e.getMessage());
                 return ResponseUtil.buildErrorResponse(
-                        HttpStatus.FORBIDDEN,
+                        HttpStatus.NOT_ACCEPTABLE,
                         "Error",
-                        "You are not authorized to access this resource."
+                        "Error Processing Request"
                 );
             }
-
         } else {
             return ResponseUtil.buildErrorResponse(
                     HttpStatus.FORBIDDEN,
@@ -165,6 +138,7 @@ public class PostController {
                     "You are not authorized to access this resource."
             );
         }
+
     }
 }
 
